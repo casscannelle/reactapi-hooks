@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+function useFipeAPI(endpoint, dependencies = []) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    axios.get(`https://parallelum.com.br/fipe/api/v1/carros${endpoint}`)
+      .then(response => setData(response.data))
+      .catch(error => setError(error))
+      .finally(() => setLoading(false));
+  }, dependencies);
+
+  return { data, loading, error };
+}
+
 function BuscaFIPE() {
   const [carBrands, setCarBrands] = useState([]);
   const [carModels, setCarModels] = useState([]);
@@ -10,61 +28,27 @@ function BuscaFIPE() {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
 
-  useEffect(() => {
-    // Marca
-    axios.get('https://parallelum.com.br/fipe/api/v1/carros/marcas')
-      .then(response => setCarBrands(response.data))
-      .catch(error => console.error('Erro na busca de marca:', error));
-  }, []);
+  const { data: brandData, loading: brandLoading, error: brandError } = useFipeAPI('/marcas');
+  const { data: modelData, loading: modelLoading, error: modelError } = useFipeAPI(`/marcas/${selectedBrand}/modelos`, [selectedBrand]);
+  const { data: yearData, loading: yearLoading, error: yearError } = useFipeAPI(`/marcas/${selectedBrand}/modelos/${selectedModel}/anos`, [selectedBrand, selectedModel]);
+  const { data: valueData, loading: valueLoading, error: valueError } = useFipeAPI(`/marcas/${selectedBrand}/modelos/${selectedModel}/anos/${selectedYear}`, [selectedBrand, selectedModel, selectedYear]);
 
-  useEffect(() => {
-    // Modelo
-    if (selectedBrand) {
-      axios.get(`https://parallelum.com.br/fipe/api/v1/carros/marcas/${selectedBrand}/modelos`)
-        .then(response => setCarModels(response.data.modelos))
-        .catch(error => console.error('Erro na busca de modelo:', error));
-    }
-  }, [selectedBrand]);
-
-  useEffect(() => {
-    // Ano
-    if (selectedBrand && selectedModel) {
-      axios.get(`https://parallelum.com.br/fipe/api/v1/carros/marcas/${selectedBrand}/modelos/${selectedModel}/anos`)
-        .then(response => setCarYears(response.data))
-        .catch(error => console.error('Erro na busca de ano:', error));
-    }
-  }, [selectedBrand, selectedModel]);
-
-  useEffect(() => {
-    // Valor
-    if (selectedBrand && selectedModel && selectedYear) {
-      axios.get(`https://parallelum.com.br/fipe/api/v1/carros/marcas/${selectedBrand}/modelos/${selectedModel}/anos/${selectedYear}`)
-        .then(response => setCarValue(response.data.Valor))
-        .catch(error => console.error('Erro na busca do valor:', error));
-    }
-  }, [selectedBrand, selectedModel, selectedYear]);
-
-  // Resetar ao trocar a marca
-    const handleBrandChange = (event) => {
+  const handleBrandChange = (event) => {
     const newSelectedBrand = event.target.value;
     setSelectedBrand(newSelectedBrand);
-    
     setSelectedModel('');
     setSelectedYear('');
     setCarValue('');
   };
 
-  // Resetar ao trocar modelo 
-    const handleModelChange = (event) => {
+  const handleModelChange = (event) => {
     const newSelectedModel = event.target.value;
     setSelectedModel(newSelectedModel);
-    
     setSelectedYear('');
     setCarValue('');
   };
 
-  // Resetar ao trocar ano
-    const handleYearChange = (event) => {
+  const handleYearChange = (event) => {
     const newSelectedYear = event.target.value;
     setSelectedYear(newSelectedYear);
     setCarValue('');
@@ -76,8 +60,8 @@ function BuscaFIPE() {
 
       <label>Marca:</label>
       <select value={selectedBrand} onChange={handleBrandChange}>
-        <option  value="">Selecione a marca</option>
-        {carBrands.map(brand => (
+        <option value="">Selecione a marca</option>
+        {brandData && brandData.map(brand => (
           <option className="options" key={brand.codigo} value={brand.codigo}>
             {brand.nome}
           </option>
@@ -89,7 +73,7 @@ function BuscaFIPE() {
           <label>Modelo:</label>
           <select value={selectedModel} onChange={handleModelChange}>
             <option value="">Selecione o modelo</option>
-            {carModels.map(model => (
+            {modelData && modelData.modelos.map(model => (
               <option className="options" key={model.codigo} value={model.codigo}>
                 {model.nome}
               </option>
@@ -101,7 +85,7 @@ function BuscaFIPE() {
               <label>Ano:</label>
               <select value={selectedYear} onChange={handleYearChange}>
                 <option value="">Selecione o ano</option>
-                {carYears.map(year => (
+                {yearData && yearData.map(year => (
                   <option className="options" key={year.codigo} value={year.codigo}>
                     {year.nome}
                   </option>
@@ -112,7 +96,14 @@ function BuscaFIPE() {
                 <div>
                   <h2>Resultado</h2>
                   
-                  <h3>Valor:</h3> {carValue}
+                  {valueLoading && <p>Loading...</p>}
+                  {valueError && <p>Error: {valueError.message}</p>}
+                  {valueData && (
+                    <>
+                      <h3>Valor:</h3>
+                      {valueData.Valor}
+                    </>
+                  )}
                 </div>
               )}
             </div>
