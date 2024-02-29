@@ -1,0 +1,41 @@
+*{
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  
+}
+
+select {
+  background-color: white;
+  border: 1px solid #f8f8f8;
+  border-radius: 10px;
+  padding: 5px;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 5px;
+  
+}
+
+.options {
+  background-color: white;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+p {
+  padding-bottom: 0;
+  margin: 5px;
+  font-weight: bold;
+}
+
+.centralizar {
+  background-color: rgb(242, 242, 248);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh; 
+  width: 50vw;
+  margin: auto;
+  margin-top: 5%;
+  border-radius: 15px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+}
